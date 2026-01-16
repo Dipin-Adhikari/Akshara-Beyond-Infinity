@@ -1,61 +1,124 @@
-import random
 from fastapi import APIRouter, HTTPException
-from database import db  # Ensure this matches your project structure
+from typing import List
+import random
 
-# Base URL: /api/modules/ar-hunt
-router = APIRouter(prefix="/api/module", tags=["ar-hunt"])
+router = APIRouter(prefix="/api/modules", tags=["ar-hunt"])
+
+# --------------------------------------------------
+# IN-MEMORY AR HUNT DATA (NO DATABASE, NO FILE I/O)
+# --------------------------------------------------
+
+AR_HUNT_TASKS = [
+    {
+        "task_id": "ar_apple",
+        "module_id": "ar-hunt",
+        "level": 1,
+        "epoch": 0,
+        "content": {
+            "target_word": "Apple",
+            "prompt_text": "Can you find the Apple hidden in your room?",
+            "model_3d_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Apple/glTF/Apple.gltf",
+            "audio_url": "static/audio/ar_apple.mp3"
+        }
+    },
+    {
+        "task_id": "ar_duck",
+        "module_id": "ar-hunt",
+        "level": 1,
+        "epoch": 1,
+        "content": {
+            "target_word": "Duck",
+            "prompt_text": "Look around! Where is the Duck?",
+            "model_3d_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf",
+            "audio_url": "static/audio/ar_duck.mp3"
+        }
+    },
+    {
+        "task_id": "ar_chair",
+        "module_id": "ar-hunt",
+        "level": 1,
+        "epoch": 2,
+        "content": {
+            "target_word": "Chair",
+            "prompt_text": "Scan the floor to place the Chair!",
+            "model_3d_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/SheenChair/glTF/SheenChair.gltf",
+            "audio_url": "static/audio/ar_chair.mp3"
+        }
+    },
+    {
+        "task_id": "ar_robot",
+        "module_id": "ar-hunt",
+        "level": 2,
+        "epoch": 0,
+        "content": {
+            "target_word": "Robot",
+            "prompt_text": "Find the Robot walking on the floor!",
+            "model_3d_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/SciFiHelmet/glTF/SciFiHelmet.gltf",
+            "audio_url": "static/audio/ar_robot.mp3"
+        }
+    },
+    {
+        "task_id": "ar_lantern",
+        "module_id": "ar-hunt",
+        "level": 2,
+        "epoch": 1,
+        "content": {
+            "target_word": "Lantern",
+            "prompt_text": "It's dark! Find the Lantern.",
+            "model_3d_url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Lantern/glTF/Lantern.gltf",
+            "audio_url": "static/audio/ar_lantern.mp3"
+        }
+    }
+]
+
+# --------------------------------------------------
+# GET RANDOM AR HUNT TASK (USED BY FRONTEND)
+# --------------------------------------------------
 
 @router.get("/ar-hunt")
 async def get_random_ar_task():
     """
-    Fetches a single random AR task round.
-    Returns 1 Target (Correct) + 3 Distractors (Wrong).
+    Returns:
+    - 1 correct AR object
+    - 3 distractors
     """
-    
-    # 1. Fetch ALL AR tasks from the database
-    # We need the full set to pick random distractors
-    all_tasks = await db.content.find({"module_id": "ar-hunt"}).to_list(length=100)
-    
-    if not all_tasks:
-        raise HTTPException(status_code=404, detail="No AR content found in database.")
 
-    # 2. Pick ONE random Target (The correct answer)
-    target_task = random.choice(all_tasks)
-    
-    # 3. Pick 3 Distractors (Wrong answers)
-    # Filter out the target so we don't have duplicates
-    potential_distractors = [t for t in all_tasks if t["_id"] != target_task["_id"]]
-    
-    # Safely sample up to 3 items (or fewer if DB is small)
-    count = min(3, len(potential_distractors))
-    distractors = random.sample(potential_distractors, count)
-    
-    # 4. Construct the Options List for the Frontend
+    if len(AR_HUNT_TASKS) < 2:
+        raise HTTPException(status_code=500, detail="Not enough AR Hunt data")
+
+    target_task = random.choice(AR_HUNT_TASKS)
+
+    distractor_pool = [
+        t for t in AR_HUNT_TASKS
+        if t["task_id"] != target_task["task_id"]
+    ]
+
+    distractors = random.sample(
+        distractor_pool,
+        min(3, len(distractor_pool))
+    )
+
     options = []
-    
-    # Add Target
+
     options.append({
-        "id": str(target_task["_id"]),
+        "id": target_task["task_id"],
         "name": target_task["content"]["target_word"],
         "is_correct": True,
-        "image_url": target_task["content"].get("model_3d_url"),
+        "image_url": target_task["content"].get("model_3d_url")
     })
-    
-    # Add Distractors
+
     for d in distractors:
         options.append({
-            "id": str(d["_id"]),
+            "id": d["task_id"],
             "name": d["content"]["target_word"],
             "is_correct": False,
-            "image_url": d["content"].get("model_3d_url"),
+            "image_url": d["content"].get("model_3d_url")
         })
-    
-    # Shuffle options so the correct answer isn't always in the same spot
+
     random.shuffle(options)
-    
-    # 5. Return the Final Game Data
+
     return {
-        "task_id": str(target_task["_id"]),
+        "task_id": target_task["task_id"],
         "level": target_task["level"],
         "epoch": target_task["epoch"],
         "prompt": target_task["content"]["prompt_text"],
