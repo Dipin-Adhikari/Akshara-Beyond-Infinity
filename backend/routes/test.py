@@ -11,15 +11,15 @@ from typing import List, Optional
 
 # FastAPI & Pydantic
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 # Image Processing
 from PIL import Image, ImageOps, ImageFilter
 from torchvision import transforms
 
-# Audio & AI
-from gtts import gTTS
+# AI
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -46,51 +46,118 @@ ENGLISH_MODEL_PATH = r"D:\Akshara\backend\models\emnist_26_best.pth"
 NEPALI_MODEL_PATH = r"D:\Akshara\backend\models\best_devanagari_model.pth"
 
 # ==========================================
-# 1. CURRICULUM (Questions)
+# 1. CURRICULUM (Updated)
 # ==========================================
-# This acts as the "Teacher" telling the frontend what to show next.
+# Note: Ensure these .mp3 files exist in your 'audio' folder.
+
 CURRICULUM = [
+    # --- English Writing (Listen -> Write) ---
     { 
         "id": 1, 
         "type": "writing", 
         "lang": "english", 
         "target": "b", 
-        "content": "The sound is buh... as in Ball. Write the letter b." 
+        "audio_filename": "en_b.mp3",
+        "instruction": "Listen to the sound and write the letter." 
     },
     { 
         "id": 2, 
         "type": "writing", 
-        "lang": "nepali", 
-        "target": "ka", 
-        "content": "क भन्नुहोस् (Say Ka). Write Ka." 
+        "lang": "english", 
+        "target": "d", 
+        "audio_filename": "en_d.mp3", 
+        "instruction": "Listen to the sound and write the letter." 
     },
     { 
         "id": 3, 
-        "type": "speaking", 
+        "type": "writing", 
         "lang": "english", 
-        "target": "The cat sat on the mat", 
-        "content": "Read this sentence aloud:" 
+        "target": "p", 
+        "audio_filename": "en_p.mp3", 
+        "instruction": "Listen to the sound and write the letter." 
     },
     { 
         "id": 4, 
         "type": "writing", 
         "lang": "english", 
-        "target": "d", 
-        "content": "The sound is duh... as in Dog. Write the letter d." 
+        "target": "u", 
+        "audio_filename": "en_u.mp3", 
+        "instruction": "Listen to the sound and write the letter." 
     },
     { 
         "id": 5, 
-        "type": "speaking", 
-        "lang": "nepali", 
-        "target": "मेरो नाम राम हो", 
-        "content": "यो वाक्य पढ्नुहोस् (Read this sentence):" 
+        "type": "writing", 
+        "lang": "english", 
+        "target": "s", 
+        "audio_filename": "en_s.mp3", 
+        "instruction": "Listen to the sound and write the letter." 
     },
+
+    # --- Nepali Writing (Listen -> Write) ---
+    # Testing specific confusion pairs: ब/व, त/न, द/ध, क/फ
     { 
         "id": 6, 
         "type": "writing", 
         "lang": "nepali", 
+        "target": "ka", 
+        "audio_filename": "ne_ka.m4a", 
+        "instruction": "आवाज सुन्नुहोस् र अक्षर लेख्नुहोस्।" 
+    },
+    { 
+        "id": 7, 
+        "type": "writing", 
+        "lang": "nepali", 
+        "target": "ba", 
+        "audio_filename": "ne_ba.m4a", 
+        "instruction": "आवाज सुन्नुहोस् र अक्षर लेख्नुहोस्।" 
+    },
+    { 
+        "id": 8, 
+        "type": "writing", 
+        "lang": "nepali", 
+        "target": "da", 
+        "audio_filename": "ne_da.m4a", 
+        "instruction": "आवाज सुन्नुहोस् र अक्षर लेख्नुहोस्।" 
+    },
+    { 
+        "id": 9, 
+        "type": "writing", 
+        "lang": "nepali", 
         "target": "ma", 
-        "content": "म भन्नुहोस् (Say Ma). Write Ma." 
+        "audio_filename": "ne_ma.m4a", 
+        "instruction": "आवाज सुन्नुहोस् र अक्षर लेख्नुहोस्।" 
+    },
+
+    # --- English Speaking (Read Aloud) ---
+    { 
+        "id": 10, 
+        "type": "speaking", 
+        "lang": "english", 
+        "target": "The big black dog dug a deep dark ditch.", 
+        "content": "Read this sentence aloud:" 
+    },
+    { 
+        "id": 11, 
+        "type": "speaking", 
+        "lang": "english", 
+        "target": "She saw six slim snakes slide slowly.", 
+        "content": "Read this sentence aloud:" 
+    },
+
+    # --- Nepali Speaking (Read Aloud) ---
+    { 
+        "id": 12, 
+        "type": "speaking", 
+        "lang": "nepali", 
+        "target": "दिनदिनै नदी नजिक नानी नाचिन्।", 
+        "content": "यो वाक्य पढ्नुहोस्:" 
+    },
+    { 
+        "id": 13, 
+        "type": "speaking", 
+        "lang": "nepali", 
+        "target": "बाबुले धेरै भारी बोरा बोके।", 
+        "content": "यो वाक्य पढ्नुहोस्:" 
     },
 ]
 
@@ -216,31 +283,14 @@ class FinalAssessmentResponse(BaseModel):
 
 @router.get("/curriculum")
 async def get_curriculum():
-    """Returns the mixed list of Writing and Speaking questions."""
+    """Returns the list of Writing and Speaking questions."""
     return CURRICULUM
-
-@router.post("/speak")
-async def generate_tts(text: str = "", language: str = "english"):
-    """Generates audio instructions using gTTS."""
-    try:
-        mp3_fp = io.BytesIO()
-        lang_code = 'ne' if language == 'nepali' else 'en'
-        # Handle empty text just in case
-        txt_to_speak = text if text else "No text provided"
-        
-        tts = gTTS(text=txt_to_speak, lang=lang_code, slow=False)
-        tts.write_to_fp(mp3_fp)
-        mp3_fp.seek(0)
-        return StreamingResponse(mp3_fp, media_type="audio/mpeg")
-    except Exception as e:
-        print(f"TTS Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/analyze/writing", response_model=AnalysisResult)
 async def analyze_writing(data: HandwritingSubmission):
-    """Analyzes handwriting using PyTorch CNNs."""
+    """Analyzes handwriting and checks for specific confusion pairs."""
     
-    # Select Model
+    # Select Model & Config
     if data.language == "nepali":
         model = active_nepali_model
         mapping = DEVANAGARI_MAPPING
@@ -256,7 +306,7 @@ async def analyze_writing(data: HandwritingSubmission):
         raise HTTPException(status_code=500, detail="Model not loaded on backend")
 
     try:
-        # 1. Decode Image
+        # --- 1. Image Preprocessing ---
         if "base64," in data.image_base64:
             base64_str = data.image_base64.split("base64,")[1]
         else:
@@ -265,7 +315,7 @@ async def analyze_writing(data: HandwritingSubmission):
         image_data = base64.b64decode(base64_str)
         img = Image.open(io.BytesIO(image_data))
 
-        # 2. Preprocess (Transparency -> White -> Grayscale -> Invert -> Thicken)
+        # Handle Transparency (Alpha to White)
         if img.mode != 'RGB':
             bg = Image.new("RGB", img.size, (255, 255, 255))
             if 'A' in img.mode:
@@ -274,11 +324,12 @@ async def analyze_writing(data: HandwritingSubmission):
                 bg.paste(img)
             img = bg
 
+        # Convert to Grayscale, Invert, Thicken
         img = img.convert("L")
         img = ImageOps.invert(img)
-        img = img.filter(ImageFilter.MaxFilter(5)) # Thicken strokes
+        img = img.filter(ImageFilter.MaxFilter(5)) 
 
-        # 3. Crop to content & Center
+        # Smart Crop & Center
         bbox = img.getbbox()
         if bbox:
             img_cropped = img.crop(bbox)
@@ -292,7 +343,7 @@ async def analyze_writing(data: HandwritingSubmission):
         else:
             img = img.resize((img_size, img_size))
 
-        # 4. Predict
+        # --- 2. Model Prediction ---
         transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.5,), (0.5,))
@@ -306,7 +357,7 @@ async def analyze_writing(data: HandwritingSubmission):
             pred_char = mapping.get(predicted_idx.item(), "?")
             conf_score = confidence.item()
 
-        # 5. Dyslexia Scoring Logic
+        # --- 3. Dyslexia Scoring Logic (Specific to your pairs) ---
         target = data.target_letter.lower()
         predicted = pred_char.lower()
         is_correct = (target == predicted)
@@ -315,25 +366,44 @@ async def analyze_writing(data: HandwritingSubmission):
         feedback = "Good match!"
 
         if data.language == "english":
-            reversals = {'b': 'd', 'd': 'b', 'p': 'q', 'q': 'p', 'm': 'w', 'w': 'm'}
+            # English Logic (u, s, b, p, d)
+            reversals = {
+                'b': 'd', 'd': 'b', 
+                'p': 'q', 'q': 'p', 
+                'u': 'n', 'n': 'u', # Rotation
+                's': '5' # Visual approximate
+            }
             if is_correct:
-                feedback = "Correct (English)"
+                feedback = "Correct!"
             elif reversals.get(target) == predicted:
-                risk_weight = 100
-                feedback = f"Mirror Error: Wrote '{predicted}' instead of '{target}'"
+                risk_weight = 100 # Maximum risk for mirror/rotation errors
+                feedback = f"Mirror/Rotation Error: Wrote '{predicted}' instead of '{target}'"
             else:
-                risk_weight = 20
+                risk_weight = 20 # General error
                 feedback = f"Incorrect. Looks like '{predicted}'"
+
         else:
-            # Nepali Logic
-            confusions = {'ka': 'pha', 'pha': 'ka', 'ma': 'bha', 'bha': 'ma'}
+            # Nepali Logic (Specific Confusion Pairs: क/फ, ब/व, त/न, द/ध)
+            # Note: 'waw' is used for 'wa' in the class mapping usually.
+            
+            nepali_confusions = {
+                'ka': ['pha', 'pa'],   # ka vs pha
+                'ba': ['waw', 'wa', 'vaw'], # ba vs wa
+                'ta': ['na', 'la'],    # ta vs na (or bha sometimes)
+                'da': ['dha', 'gha'],  # da vs dha
+                'pha': ['ka'],
+                'waw': ['ba'],
+                'na': ['ta'],
+                'dha': ['da']
+            }
+
             if is_correct:
                 feedback = "Correct (Nepali)"
-            elif confusions.get(target) == predicted:
-                risk_weight = 80
-                feedback = f"Visual confusion: '{predicted}' vs '{target}'"
+            elif predicted in nepali_confusions.get(target, []):
+                risk_weight = 90 # High risk for specific confusion pairs
+                feedback = f"Visual Confusion: Wrote '{predicted}' instead of '{target}'"
             else:
-                risk_weight = 20
+                risk_weight = 30 # Standard error
                 feedback = f"Incorrect. Looks like '{predicted}'"
 
         return {
@@ -357,8 +427,10 @@ async def analyze_speaking(
     language: str = Form(...)
 ):
     """
-    Analyzes audio using Gemini 1.5 Flash.
-    Checks for reading accuracy and fluency.
+    Analyzes audio using Gemini.
+    Targets phonological processing:
+    - English: "The big black dog dug a deep dark ditch" (Alliteration/Stops)
+    - Nepali: "दिनदिनै नदी नजिक..." (Rhythm/Phonemes)
     """
     try:
         if not GOOGLE_API_KEY:
@@ -372,26 +444,28 @@ async def analyze_speaking(
         
         # 3. Prompt for Dyslexia Assessment
         prompt = f"""
-        You are an expert dyslexia assessor. 
-        Analyze this audio recording of a child (approx 6-12 years old) attempting to read the text: "{target_text}".
+        Analyze this audio recording of a child reading the text: "{target_text}".
         Language: {language}.
 
-        Tasks:
-        1. Transcribe exactly what the child said.
-        2. Score the accuracy (0-100).
-        3. Identify if there are signs of phonological processing issues (skipping words, stuttering on specific sounds).
-        4. Assign a 'risk_weight':
-           - 0 if perfect or near perfect.
-           - 20 for minor hesitations.
-           - 50 for mispronouncing key words.
-           - 100 for inability to read or completely wrong words.
+        Dyslexia Screening Focus:
+        1. Transcribe exactly what was said.
+        2. Check for:
+           - Stuttering on plosive sounds (b, d, p, k, t).
+           - Skipping words or substituting words visually similar.
+           - Reading fluency/speed (too slow?).
         
-        Return STRICT JSON format:
+        Assign 'risk_weight':
+        - 0: Fluent.
+        - 20: Minor hesitation.
+        - 60: Significant stumbling on similar sounds (e.g., 'dog' vs 'dug').
+        - 100: Inability to read or skipping multiple words.
+        
+        Return STRICT JSON:
         {{
             "transcribed_text": "string",
-            "accuracy_score": integer,
+            "accuracy_score": integer (0-100),
             "risk_weight": integer,
-            "feedback": "Short encouraging feedback for the child (max 10 words)"
+            "feedback": "Short feedback max 10 words"
         }}
         """
 
@@ -399,14 +473,13 @@ async def analyze_speaking(
         response = model.generate_content([
             prompt,
             {
-                "mime_type": "audio/mp3", # Gemini handles wav/mp3/webm generic audio
+                "mime_type": "audio/mp3", 
                 "data": audio_bytes
             }
         ])
 
-        # 5. clean and parse JSON
+        # 5. Clean and parse JSON
         raw_text = response.text
-        # Remove markdown code blocks if present
         if "```json" in raw_text:
             raw_text = raw_text.split("```json")[1].split("```")[0]
         elif "```" in raw_text:
@@ -426,7 +499,6 @@ async def analyze_speaking(
 
     except Exception as e:
         print(f"❌ Gemini Error: {e}")
-        # Fallback response so app doesn't crash
         return {
             "question_type": "speaking",
             "target": target_text,
@@ -434,50 +506,42 @@ async def analyze_speaking(
             "confidence": 0,
             "is_correct": False,
             "risk_weight": 0,
-            "feedback": "Could not analyze audio. Please try again."
+            "feedback": "Analysis failed. Try again."
         }
 
 @router.post("/finish-assessment", response_model=FinalAssessmentResponse)
 async def calculate_final_score(data: FinalAssessmentRequest):
-    """Calculates final Dyslexia Risk Score based on mixed results."""
+    """Calculates final Dyslexia Risk Score based on results."""
     
     if not data.results:
         return {
             "score_percentage": 0, 
             "risk_label": "N/A", 
             "risk_color": "", 
-            "summary_text": "No data received."
+            "summary_text": "No data."
         }
 
-    # Calculate Total Risk
-    # Each question has a max risk of 100
     total_risk = sum(r.risk_weight for r in data.results)
     max_possible_risk = len(data.results) * 100
     
-    # Normalize to 0-100 scale (Where 100 is MAX risk)
     if max_possible_risk == 0:
         risk_percentage = 0
     else:
-        # We multiply by a factor (e.g. 1.5) to make it stricter, capped at 100
         risk_percentage = min(math.ceil((total_risk / max_possible_risk) * 100), 100)
 
     # Determine Label
-    if risk_percentage < 20:
-        label = "Low Risk"
+    if risk_percentage < 25:
+        label = "Low Probability"
         color = "text-green-600"
-        summary = "Great job! Your reading and writing skills are strong."
-    elif risk_percentage < 50:
-        label = "Moderate Risk"
+        summary = "User shows strong phonological awareness and letter recognition."
+    elif risk_percentage < 60:
+        label = "Moderate Probability"
         color = "text-orange-600"
-        summary = "Good effort, but you had some trouble with specific letters or sounds."
+        summary = "Some signs of confusion with specific visual/auditory pairs detected."
     else:
-        label = "High Risk"
+        label = "High Probability"
         color = "text-red-600"
-        summary = "We noticed some consistent challenges with mirroring letters or reading flow."
-
-    print(f"\n🏆 ASSESSMENT COMPLETED")
-    print(f"📉 Total Risk Score: {total_risk}/{max_possible_risk}")
-    print(f"📈 Risk Percentage: {risk_percentage}%")
+        summary = "Significant challenges with mirror letters and phonemic sequencing detected."
 
     return {
         "score_percentage": risk_percentage,
@@ -485,3 +549,12 @@ async def calculate_final_score(data: FinalAssessmentRequest):
         "risk_color": color,
         "summary_text": summary
     }
+
+# ==========================================
+# 6. MOUNT STATIC AUDIO FOLDER
+# ==========================================
+# Make sure a folder named 'audio' exists in the root directory
+if not os.path.exists("audio"):
+    os.makedirs("audio")
+    print("⚠️ Created 'audio' directory. Please place your .mp3 files there.")
+
