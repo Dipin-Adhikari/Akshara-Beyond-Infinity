@@ -71,7 +71,8 @@ class StoryPage(BaseModel):
     text: str
     image_prompt: str
     image_url: Optional[str] = None # Filled after generation
-
+    audio_url: Optional[str] = None
+    
 class Story(BaseModel):
     id: int 
     title: str

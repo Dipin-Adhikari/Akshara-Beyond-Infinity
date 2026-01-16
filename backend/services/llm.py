@@ -8,54 +8,67 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 async def generate_stories_from_mistakes(letters: list[str]) -> list[dict]:
-    if not letters:
-        letters = ["b", "d"] 
+    if not letters: letters = ["b", "d"] 
 
     prompt = f"""
-    You are a specialized dyslexia tutor for children (6-8 years).
-    Create 3 short stories to practice these letters: {letters}.
+    You are an expert Dyslexia Specialist and Children's Storyteller. 
+    Your task is to create 3 therapeutic short stories for a child aged 6-12 who struggles with these specific letters/phonemes: {letters}.
 
-    Requirements:
-    1. **Structure**: Each story must have a 'cover_image_prompt' and exactly 3 'pages' (Chapters).
-    2. **Pages**: Each page needs 'text' (2-3 simple sentences) and an 'image_prompt' (visual description for an AI generator).
-    3. **Themes**: 
-       - Story 1: English (Nepali Village Theme)
-       - Story 2: English (Animals/Nature Theme)
-       - Story 3: Nepali Language (Simple Folklore)
-    4. **Visuals**: Image prompts must be cute, colorful, 3d render style, suitable for children.
+    ### THE CORE MISSION
+    The child makes mistakes with {letters}. Use these stories for 'Multi-Sensory Repetition'. 
+    Incorporate words containing these letters frequently, but keep the sentences readable. 
+    For the Nepali story, focus on the Devanagari script versions of these phonetic struggles.
 
-    Output STRICT JSON format:
+    ### STORY REQUIREMENTS
+    1. **Theme**: All stories MUST be based on Nepali Folklore, Festivals (Dashain, Tihar, Holi), or traditional Nepali 'Kathas' (e.g., stories of Birbal, local village fables, or animal fables like the clever jackal).
+    2. **Length**: Each story has 3 pages. Each page should have 3-5 clear, meaningful sentences. Not too short to be boring, but not a "wall of text" that overwhelms a dyslexic reader.
+    3. **Structure**:
+        - Story 1: English (Nepali Folklore theme)
+        - Story 2: English (Nepali Village/Animal theme)
+        - Story 3: Nepali (Traditional Katha theme) - **Text MUST be in Devanagari script.**
+
+    ### OUTPUT JSON FORMAT (Strictly Follow)
     [
-      {{
+    {{
         "id": 1,
-        "title": "The Big Bear",
-        "theme": "Animals",
-        "cover_image_prompt": "Cute 3d render of a big bear in a forest, sunny day",
+        "language": "English",
+        "title": "String",
+        "theme": "String",
+        "cover_image_prompt": "Whimsical, high-quality 3D render, vibrant colors, child-friendly",
         "focus_letters": {json.dumps(letters)},
         "pages": [
-           {{ "text": "The bear saw a bee.", "image_prompt": "A bear looking at a bee on a flower, close up, cute 3d render" }},
-           {{ "text": "...", "image_prompt": "..." }},
-           {{ "text": "...", "image_prompt": "..." }}
+        {{
+            "page_number": 1,
+            "text": "The story text goes here. Use frequent repetition of {letters}.",
+            "image_prompt": "Detailed description for DALL-E/Midjourney relating to this page"
+        }},
+        ... (exactly 3 pages)
         ]
-      }},
-      ... (Story 2 and 3)
+    }},
+    {{
+        "id": 3,
+        "language": "Nepali",
+        "title": "Devanagari Title",
+        "theme": "Nepali Folklore",
+        "cover_image_prompt": "Traditional Nepali art style, 3D render",
+        "focus_letters": {json.dumps(letters)},
+        "pages": [
+        {{
+            "page_number": 1,
+            "text": "नेपाली पाठ यहाँ लेख्नुहोस्। Use repetition of {letters}.",
+            "image_prompt": "Detailed description for DALL-E relating to this page"
+        }},
+        ... (exactly 3 pages)
+        ]
+    }}
     ]
     """
 
     try:
         response = await model.generate_content_async(
-            prompt, 
-            generation_config={"response_mime_type": "application/json"}
+            prompt, generation_config={"response_mime_type": "application/json"}
         )
         return json.loads(response.text)
     except Exception as e:
-        print(f"GenAI Error: {e}")
-        # Fallback Structure
-        return [{
-            "id": 1, 
-            "title": "Error Generating", 
-            "theme": "Error", 
-            "focus_letters": letters,
-            "cover_image_prompt": "Error",
-            "pages": [{"text": "Please try again.", "image_prompt": "Error"}]
-        }]
+        print(f"LLM Error: {e}")
+        return []
