@@ -18,9 +18,9 @@ export default function ModuleRunner() {
       case 'sound-safari':
         return <SoundSafari />;
         
-      case 'ar-hunt':
+      case 'twin-letters':
         // We pass the userId here so the component can fetch data
-        return <ArHunt userId={currentUserId} />;
+        return <ArHunt />;
         
       case 'word-builder':
         return <div className="text-center py-20 font-bold text-2xl text-slate-400">Word Builder Loading...</div>;
