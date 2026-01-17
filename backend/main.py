@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from routes import test, stories, modules, admin_sound_safari, admin_ar, ar_route  # assuming you put seed in admin.py
+from routes import test, stories, modules, admin_sound_safari, admin_ar, ar_route, dashboard, content  # assuming you put seed in admin.py
 
 if not os.path.exists("images"):
     os.makedirs("images")
@@ -27,3 +27,5 @@ app.include_router(modules.router)
 app.include_router(admin_sound_safari.router)
 app.include_router(admin_ar.router)
 app.include_router(ar_route.router)
+app.include_router(dashboard.router)
+app.include_router(content.router)
