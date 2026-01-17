@@ -1,7 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { 
+  Star,
   BookOpen, 
   Gamepad2, 
   LayoutDashboard, 
@@ -12,16 +14,42 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import Image from 'next/image';
 
-export default function LandingPage() {
+export default function ModulesPage() {
+  const [stars, setStars] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Handle scroll effect for navbar
   useEffect(() => {
+    // Generate random stars
+    const newStars = Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+    }));
+    setStars(newStars);
+
+    // Get window size for drag constraints
+    const updateWindowSize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    updateWindowSize();
+    window.addEventListener('resize', updateWindowSize);
+
+    // Handle scroll effect for navbar
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('resize', updateWindowSize);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const navLinks = [
@@ -32,7 +60,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FFFBEB] font-sans text-slate-800 selection:bg-orange-200">
+    <div className="min-h-screen bg-gradient-to-b from-[#87CEEB] via-[#FFF9E6] to-[#FFFDF6] font-['Fredoka',_sans-serif] relative overflow-x-hidden">
       
       {/* --- NAVBAR --- */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
@@ -93,8 +121,149 @@ export default function LandingPage() {
         )}
       </nav>
 
+      {/* Animated Stars Background */}
+      {stars.map((star) => (
+        <motion.div
+          key={star.id}
+          className="absolute text-yellow-300 pointer-events-none z-5"
+          style={{ left: `${star.x}%`, top: `${star.y}%` }}
+          animate={{
+            scale: [1, 1.5, 1],
+            opacity: [0.3, 1, 0.3],
+            rotate: [0, 180, 360]
+          }}
+          transition={{
+            duration: 3 + Math.random() * 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: Math.random() * 2
+          }}
+        >
+          <Star size={10 + Math.random() * 6} fill="currentColor" />
+        </motion.div>
+      ))}
+
+      {/* Floating Clouds */}
+      <motion.div
+        className="absolute top-10 left-0 text-8xl pointer-events-none z-5 opacity-70"
+        animate={{ x: ["-10%", "110%"] }}
+        transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+      >
+        ☁️
+      </motion.div>
+      <motion.div
+        className="absolute top-32 right-0 text-7xl pointer-events-none z-5 opacity-60"
+        animate={{ x: ["110%", "-10%"] }}
+        transition={{ duration: 60, repeat: Infinity, ease: "linear", delay: 5 }}
+      >
+        ☁️
+      </motion.div>
+
+      {/* Interactive Rocket - Draggable anywhere with inertia and boundary bounce */}
+      <motion.div
+        className="absolute left-10 text-7xl z-5 cursor-grab active:cursor-grabbing"
+        animate={{
+          y: [50, 20, 50],
+          rotate: [25, 30, 25],
+        }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        style={{ top: '10%' }}
+        drag
+        dragConstraints={{
+          left: -windowSize.width * 0.4,
+          right: windowSize.width * 0.8,
+          top: -windowSize.height * 0.05,
+          bottom: windowSize.height * 0.6,
+        }}
+        dragElastic={0.2}
+        dragTransition={{ 
+          bounceStiffness: 400, 
+          bounceDamping: 15,
+          power: 0.2,
+          timeConstant: 200
+        }}
+        whileHover={{ scale: 1.2 }}
+        whileTap={{ scale: 0.9, cursor: "grabbing" }}
+      >
+        🚀
+      </motion.div>
+
+      {/* Interactive Planet - Draggable anywhere with inertia and boundary bounce */}
+      <motion.div
+        className="absolute text-9xl z-5 cursor-grab active:cursor-grabbing"
+        style={{ 
+          top: '8%',
+          right: '15%'
+        }}
+        animate={{
+          rotate: [0, 360]
+        }}
+        transition={{
+          duration: 25,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+        drag
+        dragConstraints={{
+          left: -windowSize.width * 0.7,
+          right: windowSize.width * 0.1,
+          top: -windowSize.height * 0.05,
+          bottom: windowSize.height * 0.6,
+        }}
+        dragElastic={0.2}
+        dragTransition={{ 
+          bounceStiffness: 400, 
+          bounceDamping: 15,
+          power: 0.2,
+          timeConstant: 200
+        }}
+        whileHover={{ scale: 1.2 }}
+        whileTap={{ scale: 0.9, cursor: "grabbing" }}
+      >
+        🪐
+      </motion.div>
+
+      {/* Floating Balloons */}
+      <motion.div
+        className="absolute left-1/4 text-6xl pointer-events-none z-5"
+        animate={{
+          y: [80, -10, 80],
+          x: [-5, 5, -5]
+        }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 1
+        }}
+        style={{ top: '20%' }}
+      >
+        🎈
+      </motion.div>
+
+      {/* Hanging Monkey - Top Right */}
+      <motion.div 
+        className="absolute top-0 right-0 z-50 w-40 h-40 md:w-64 md:h-64 pointer-events-none"
+        animate={{ 
+          rotate: [-6, 6, -6],
+          y: [0, -8, 0]
+        }}
+        transition={{ 
+          duration: 3, 
+          repeat: Infinity, 
+          ease: "easeInOut" 
+        }}
+        style={{ transformOrigin: "80% 0%" }}
+      >
+        <Image src="/monkey-vine.png" alt="Hanging Monkey" fill className="object-contain drop-shadow-2xl" />
+      </motion.div>
+
       {/* --- HERO SECTION --- */}
-      <header className="pt-40 pb-20 px-6">
+      <header className="pt-40 pb-20 px-6 relative z-10">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           
           {/* Left Content */}
@@ -104,9 +273,14 @@ export default function LandingPage() {
               AI-Powered Learning
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-black leading-[1.1] text-slate-900">
+            <motion.h1 
+              className="text-5xl md:text-7xl font-black leading-[1.1] text-slate-900"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 150, damping: 15 }}
+            >
               Master Reading with <span className="text-orange-500 inline-block hover:rotate-2 transition-transform cursor-default">Magic.</span>
-            </h1>
+            </motion.h1>
             
             <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-lg">
               A personalized adventure designed for unique minds. We turn reading struggles into superpowers through games, stories, and AI.
@@ -131,34 +305,28 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Right Image / Graphic Placeholder */}
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-tr from-orange-200 to-transparent rounded-[60px] rotate-3 blur-2xl opacity-50"></div>
-            <div className="relative bg-white border-8 border-slate-50 rounded-[60px] p-8 shadow-2xl rotate-1 hover:rotate-0 transition-transform duration-500">
-              {/* Mockup of the app interface */}
-              <div className="bg-[#FFFBEB] rounded-3xl p-6 space-y-4 border border-slate-100">
-                <div className="flex justify-between items-center mb-4">
-                  <div className="h-4 w-1/3 bg-slate-200 rounded-full"></div>
-                  <div className="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center text-orange-500">
-                    <Star size={16} fill="currentColor" />
-                  </div>
-                </div>
-                <div className="h-32 bg-orange-50 rounded-2xl flex items-center justify-center border-2 border-dashed border-orange-200">
-                  <span className="text-4xl font-black text-orange-300">b / d</span>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-4 w-full bg-slate-200 rounded-full"></div>
-                  <div className="h-4 w-2/3 bg-slate-200 rounded-full"></div>
-                </div>
-              </div>
+          {/* Right - Monkey Hi Image */}
+          <motion.div 
+            className="relative"
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.2 }}
+          >
+            <div className="relative w-full h-[500px]">
+              <Image 
+                src="/monkey-hi.png" 
+                alt="Monkey Greeting" 
+                fill 
+                className="object-contain drop-shadow-2xl"
+              />
             </div>
-          </div>
+          </motion.div>
 
         </div>
       </header>
 
       {/* --- FEATURES GRID --- */}
-      <section className="py-24 px-6 bg-white rounded-t-[60px] shadow-[0_-20px_60px_rgba(0,0,0,0.05)]">
+      <section className="py-24 px-6 bg-white rounded-t-[60px] shadow-[0_-20px_60px_rgba(0,0,0,0.05)] relative z-20">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-black text-slate-800 mb-4">Your Path to Mastery</h2>
@@ -199,7 +367,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-slate-900 text-slate-400 py-12 px-6">
+      <footer className="bg-slate-900 text-slate-400 py-12 px-6 relative z-20">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2 font-bold text-white text-xl">
             <Sparkles size={20} className="text-orange-500" /> Akshara
@@ -213,6 +381,10 @@ export default function LandingPage() {
         </div>
       </footer>
 
+      {/* Grass Footer - Above the white section */}
+      <div className="fixed bottom-0 left-0 w-full z-10 pointer-events-none h-40 md:h-56">
+        <Image src="/grass.png" alt="Grass" fill className="object-cover object-bottom" priority />
+      </div>
     </div>
   );
 }
@@ -234,25 +406,5 @@ function FeatureCard({ icon, title, desc, color, href }: any) {
         </div>
       </div>
     </Link>
-  );
-}
-
-// Icon helper
-function Star({ size, fill, className }: any) {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill={fill || "none"} 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
   );
 }
