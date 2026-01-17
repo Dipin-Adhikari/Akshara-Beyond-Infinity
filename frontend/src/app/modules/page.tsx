@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; // Added for navigation
+import { useRouter } from 'next/navigation'; 
 import { CONTINENT_GAMES } from '@/components/world-map/constants';
 import MapPaths from '@/components/world-map/MapPaths';
 import MapCreature from '@/components/world-map/MapCreature';
@@ -12,7 +12,7 @@ export default function InteractiveWorldMap() {
   const [clickedGame, setClickedGame] = useState<string | null>(null);
   const [boatFrame, setBoatFrame] = useState(1);
   
-  // --- PHYSICS SETUP (Identical to original) ---
+  // --- PHYSICS SETUP ---
   const [positions, setPositions] = useState(
     [
       ...CONTINENT_GAMES.map(game => ({
@@ -29,7 +29,7 @@ export default function InteractiveWorldMap() {
       { x: 45, y: 30, vx: 0.012, vy: 0.008, isDragging: false, dragOffsetX: 0, dragOffsetY: 0 }, // 6: Whale
       { x: 70, y: 60, vx: 0.008, vy: -0.006, isDragging: false, dragOffsetX: 0, dragOffsetY: 0 }, // 7: 3 Fish
       { x: 55, y: 85, vx: -0.015, vy: 0.003, isDragging: false, dragOffsetX: 0, dragOffsetY: 0 }, // 8: Red Fish
-      { x: 32, y: 55, vx: 0.008, vy: -0.007, isDragging: false, dragOffsetX: 0, dragOffsetY: 0 }  // 9: Crab
+      { x: 32, y: 55, vx: 0.008, vy: -0.007, isDragging: false, dragOffsetX: 0, dragOffsetY: 0 }   // 9: Crab
     ]
   );
 
@@ -95,7 +95,7 @@ export default function InteractiveWorldMap() {
     setClickedGame(gameId);
     setTimeout(() => {
         setClickedGame(null);
-        router.push(`/modules/${gameId}`); // Actual navigation
+        router.push(`/modules/${gameId}`); 
     }, 300);
   };
 
@@ -103,11 +103,13 @@ export default function InteractiveWorldMap() {
     <div 
       className="relative min-h-screen w-full overflow-hidden touch-none select-none"
       style={{
-        backgroundImage: 'url(/world-map.png)',
-        backgroundSize: 'cover',
+        backgroundImage: 'url(/world-map-d.png)',
+        // CHANGED: 'contain' ensures original aspect ratio
+        backgroundSize: 'contain', 
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        backgroundColor: '#4CC9F0'
+        // CHANGED: Fills the remaining space (padding) with your requested color
+        backgroundColor: '#28B9F0'
       }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -124,17 +126,11 @@ export default function InteractiveWorldMap() {
       </div>
 
       {/* --- CREATURES --- */}
-      {/* 4. Boat */}
       <MapCreature index={4} position={positions[4]} imageSrc={`/boat0${boatFrame}.png`} width={100} height={100} alt="Boat" onPointerDown={handlePointerDown} style={{ zIndex: 15 }} />
-      {/* 5. Tortuga */}
       <MapCreature index={5} position={positions[5]} imageSrc="/tortuga.png" width={120} height={120} alt="Turtle" scaleX={-1} animationStyle={{ animation: 'bobbing 3s ease-in-out infinite' }} onPointerDown={handlePointerDown} />
-      {/* 6. Flying Whale */}
       <MapCreature index={6} position={positions[6]} imageSrc="/flywhale.png" width={140} height={140} alt="Flying Whale" animationStyle={{ animation: 'floating 4s ease-in-out infinite' }} onPointerDown={handlePointerDown} />
-      {/* 7. 3 Fish */}
       <MapCreature index={7} position={positions[7]} imageSrc="/3fish.png" width={110} height={110} alt="Fish" animationStyle={{ animation: 'swimming 2.5s ease-in-out infinite' }} onPointerDown={handlePointerDown} />
-      {/* 8. Red Fish */}
       <MapCreature index={8} position={positions[8]} imageSrc="/redfish.png" width={100} height={100} alt="Red Fish" scaleX={-1} animationStyle={{ animation: 'swimming 3s ease-in-out infinite' }} onPointerDown={handlePointerDown} />
-      {/* 9. Crab */}
       <MapCreature index={9} position={positions[9]} imageSrc="/crab.png" width={90} height={90} alt="Crab" animationStyle={{ animation: 'crabWalk 2s ease-in-out infinite' }} onPointerDown={handlePointerDown} />
 
       {/* --- GAME BUTTONS --- */}
