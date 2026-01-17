@@ -3,11 +3,11 @@ import React, { useRef, useState, useEffect } from 'react';
 import { ReactSketchCanvas, ReactSketchCanvasRef } from 'react-sketch-canvas';
 import { 
   Eraser, RotateCcw, ArrowRight, Loader2, Volume2, 
-  Sparkles, Star, Mic, Square, Play, CheckCircle, Trophy, RefreshCcw
+  Mic, Square, Play, CheckCircle, Trophy, RefreshCcw
 } from 'lucide-react';
 
 // --- CONFIGURATION ---
-const API_BASE = "http://localhost:8000"; // Ensure this matches your FastAPI port
+const API_BASE = "http://localhost:8000"; 
 
 // --- TYPES ---
 type Question = {
@@ -15,9 +15,9 @@ type Question = {
   type: 'writing' | 'speaking';
   lang: 'english' | 'nepali';
   target: string;
-  audio_filename?: string; // New field from your updated backend
-  instruction?: string;    // New field from your updated backend
-  content?: string;        // Fallback
+  audio_filename?: string; 
+  instruction?: string;    
+  content?: string;        
 };
 
 type AnalysisResult = {
@@ -192,10 +192,14 @@ export default function DyslexiaAssessment() {
   // --- VIEW 1: LOADING ---
   if (appState === 'loading') {
     return (
-        <div className="h-screen flex items-center justify-center bg-sky-50 font-sans">
-            <div className="flex flex-col items-center">
-                <Loader2 className="animate-spin w-20 h-20 text-indigo-500 mb-6"/>
-                <p className="text-2xl font-bold text-indigo-800">Setting up the playground...</p>
+        <div className="h-screen flex items-center justify-center bg-sky-100 font-sans relative overflow-hidden">
+            {/* Background Assets */}
+            <img src="/boat01.png" className="absolute top-20 left-20 w-32 animate-bounce opacity-80" alt="boat" />
+            <img src="/3fish.png" className="absolute bottom-20 right-20 w-40 opacity-80" alt="fish" />
+            
+            <div className="flex flex-col items-center z-10">
+                <Loader2 className="animate-spin w-20 h-20 text-blue-500 mb-6"/>
+                <p className="text-2xl font-bold text-blue-800">Setting up your adventure...</p>
             </div>
         </div>
     );
@@ -204,13 +208,23 @@ export default function DyslexiaAssessment() {
   // --- VIEW 2: RESULTS ---
   if (appState === 'finished' && finalAnalysis) {
      return (
-       <div className="min-h-screen bg-yellow-50 p-6 flex items-center justify-center font-sans">
-         <div className="max-w-3xl w-full bg-white rounded-[3rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] text-center border-4 border-yellow-200">
+       <div className="min-h-screen bg-sky-100 p-6 flex items-center justify-center font-sans relative overflow-hidden">
+         
+         {/* Decorative Assets */}
+         <img src="/world-map-bg.png" className="absolute top-0 left-0 w-full h-full object-cover opacity-10" alt="map" />
+         <img src="/whale.png" className="absolute bottom-[-20px] left-10 w-64 md:w-96 animate-pulse" alt="whale" />
+         <img src="/seagull.png" className="absolute top-10 right-20 w-24" alt="bird" />
+
+         <div className="max-w-3xl w-full bg-white rounded-[3rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] text-center border-4 border-blue-200 z-10 relative">
+            <div className="absolute -top-12 -right-10 hidden md:block">
+                <img src="/tortuga.png" className="w-40" alt="turtle" />
+            </div>
+
             <div className="flex justify-center mb-6">
                 <Trophy className="w-32 h-32 text-yellow-400 drop-shadow-lg animate-bounce" />
             </div>
             
-            <h1 className="text-5xl font-black text-indigo-900 mb-4 tracking-tight">Great Job!</h1>
+            <h1 className="text-5xl font-black text-blue-900 mb-4 tracking-tight">Great Job!</h1>
             <p className="text-xl text-slate-500 font-medium mb-8">{finalAnalysis.summary_text}</p>
             
             {/* Risk Meter */}
@@ -229,9 +243,9 @@ export default function DyslexiaAssessment() {
 
             <button 
                 onClick={() => window.location.reload()}
-                className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold text-xl hover:bg-indigo-700 hover:scale-105 transition-all shadow-xl"
+                className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-xl hover:bg-blue-700 hover:scale-105 transition-all shadow-xl"
             >
-                Start Over
+                Play Again
             </button>
          </div>
        </div>
@@ -242,11 +256,41 @@ export default function DyslexiaAssessment() {
 
   // --- VIEW 3: ACTIVE GAME ---
   return (
-    <div className="min-h-screen bg-[#FFFBEB] font-sans selection:bg-yellow-200 flex flex-col items-center relative overflow-hidden">
+    // Changed bg-[#FFFBEB] to bg-sky-200 for Ocean Theme
+    <div className="min-h-screen bg-sky-200 font-sans selection:bg-blue-200 flex flex-col items-center relative overflow-hidden">
       
-      {/* Background Decor */}
-      <div className="absolute top-10 left-10 text-yellow-300 opacity-60 animate-pulse"><Sparkles size={80} /></div>
-      <div className="absolute bottom-20 right-10 text-indigo-200 opacity-60 animate-bounce"><Star size={100} /></div>
+      {/* --- OCEAN BACKGROUND ASSETS --- */}
+      {/* Top Layer (Sky/Surface) */}
+      <img 
+        src="/seagull.png" 
+        className="absolute top-8 left-10 w-20 md:w-32 opacity-90 animate-pulse" 
+        style={{ animationDuration: '3s' }}
+        alt="seagull"
+      />
+      <img 
+        src="/boat01.png" 
+        className="absolute top-12 right-4 md:right-20 w-32 md:w-48 opacity-90 animate-bounce" 
+        style={{ animationDuration: '4s' }}
+        alt="boat"
+      />
+
+      {/* Mid Layer (Water) */}
+      <img 
+        src="/3fish.png" 
+        className="absolute top-1/3 left-[-20px] w-24 md:w-40 opacity-80" 
+        alt="fish"
+      />
+       <img 
+        src="/redfish.png" 
+        className="absolute top-1/2 right-[-10px] w-20 md:w-32 opacity-80" 
+        alt="fish"
+      />
+
+      {/* Bottom Layer (Deep Sea) */}
+      <div className="absolute bottom-0 w-full flex justify-between items-end px-4 md:px-20 pointer-events-none z-0">
+         <img src="/crab.png" className="w-24 md:w-36 mb-4 opacity-90" alt="crab" />
+         <img src="/whale.png" className="w-48 md:w-80 -mb-10 opacity-90" alt="whale" />
+      </div>
 
       {/* HEADER: Progress */}
       <div className="w-full max-w-4xl mt-6 px-6 z-10">
@@ -255,8 +299,8 @@ export default function DyslexiaAssessment() {
                 <span className="bg-white p-2 rounded-xl shadow-sm text-2xl">
                     {currentQ.type === 'writing' ? '✏️' : '🎤'}
                 </span>
-                <h1 className="text-xl font-bold text-slate-700">
-                    Question {step + 1} <span className="text-slate-400">/ {questions.length}</span>
+                <h1 className="text-xl font-bold text-blue-900 shadow-sm">
+                    Question {step + 1} <span className="text-blue-600">/ {questions.length}</span>
                 </h1>
             </div>
             {currentQ.lang === 'nepali' && (
@@ -265,20 +309,20 @@ export default function DyslexiaAssessment() {
                 </span>
             )}
         </div>
-        <div className="h-4 bg-white rounded-full p-1 shadow-sm border border-slate-200">
+        <div className="h-4 bg-white/50 rounded-full p-1 shadow-sm border border-white/60">
             <div 
-              className="h-full bg-indigo-500 rounded-full transition-all duration-700 ease-out" 
+              className="h-full bg-blue-500 rounded-full transition-all duration-700 ease-out" 
               style={{ width: `${progressPercent}%` }}
             ></div>
         </div>
       </div>
 
-      {/* MAIN CARD */}
+      {/* MAIN CARD (Unchanged Design, just z-index context) */}
       <div className="flex-1 w-full max-w-5xl flex flex-col md:flex-row gap-6 p-6 z-10 items-stretch">
 
         {/* LEFT: INSTRUCTIONS */}
         <div className="md:w-1/3 flex flex-col">
-            <div className="flex-1 bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center gap-6 relative">
+            <div className="flex-1 bg-white rounded-[2.5rem] p-8 shadow-sm border border-blue-100 flex flex-col items-center justify-center text-center gap-6 relative">
                 
                 <h2 className="text-2xl font-black text-slate-800">
                     {currentQ.type === 'writing' ? "Listen & Write" : "Read Aloud"}
@@ -336,8 +380,8 @@ export default function DyslexiaAssessment() {
                 {/* --- SPEAKING RECORDER --- */}
                 {currentQ.type === 'speaking' && (
                     <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-indigo-50/50 to-white relative p-6">
-                         
-                         {!isRecording && !audioBlob ? (
+                          
+                          {!isRecording && !audioBlob ? (
                              <button 
                                 onClick={startRecording}
                                 className="w-40 h-40 rounded-full bg-red-500 border-8 border-red-100 shadow-lg hover:bg-red-600 hover:scale-105 transition-all flex flex-col items-center justify-center text-white"
@@ -345,7 +389,7 @@ export default function DyslexiaAssessment() {
                                  <Mic size={48} />
                                  <span className="font-bold mt-2">RECORD</span>
                              </button>
-                         ) : isRecording ? (
+                          ) : isRecording ? (
                             <div className="flex flex-col items-center animate-pulse">
                                 <button 
                                     onClick={stopRecording}
@@ -356,7 +400,7 @@ export default function DyslexiaAssessment() {
                                 </button>
                                 <p className="mt-6 text-red-500 font-bold tracking-widest">LISTENING...</p>
                             </div>
-                         ) : (
+                          ) : (
                             <div className="flex flex-col items-center gap-6">
                                 <div className="bg-green-100 text-green-700 px-6 py-4 rounded-2xl flex items-center gap-4">
                                     <CheckCircle size={32} />
@@ -379,7 +423,7 @@ export default function DyslexiaAssessment() {
                                     </button>
                                 </div>
                             </div>
-                         )}
+                          )}
                     </div>
                 )}
             </div>
@@ -395,7 +439,7 @@ export default function DyslexiaAssessment() {
                 px-10 py-4 rounded-2xl font-black text-xl flex items-center gap-3 transition-all
                 ${loading 
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
-                    : 'bg-indigo-600 text-white shadow-[0_8px_0_#312e81] hover:-translate-y-1 hover:shadow-[0_12px_0_#312e81] active:translate-y-2 active:shadow-none'
+                    : 'bg-blue-600 text-white shadow-[0_8px_0_#1e40af] hover:-translate-y-1 hover:shadow-[0_12px_0_#1e40af] active:translate-y-2 active:shadow-none'
                 }
             `}
           >
