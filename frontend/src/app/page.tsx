@@ -159,44 +159,45 @@ export default function ModulesPage() {
         ☁️
       </motion.div>
 
-      {/* Interactive Rocket - Draggable anywhere with inertia and boundary bounce */}
+      {/* Interactive Rocket - Draggable with momentum */}
       <motion.div
-        className="absolute left-10 text-7xl z-5 cursor-grab active:cursor-grabbing"
+        className="absolute left-10 text-7xl z-30 cursor-grab active:cursor-grabbing select-none"
         animate={{
-          y: [50, 20, 50],
-          rotate: [25, 30, 25],
+          y: [30, 10, 30],
+          rotate: [20, 25, 20],
         }}
         transition={{
           duration: 4,
           repeat: Infinity,
           ease: "easeInOut"
         }}
-        style={{ top: '10%' }}
+        style={{ top: '3%' }}
         drag
         dragConstraints={{
           left: -windowSize.width * 0.4,
           right: windowSize.width * 0.8,
-          top: -windowSize.height * 0.05,
-          bottom: windowSize.height * 0.6,
+          top: -windowSize.height * 0.1,
+          bottom: windowSize.height * 0.7,
         }}
-        dragElastic={0.2}
+        dragElastic={0.1}
+        dragMomentum={true}
         dragTransition={{ 
-          bounceStiffness: 400, 
-          bounceDamping: 15,
-          power: 0.2,
-          timeConstant: 200
+          bounceStiffness: 300, 
+          bounceDamping: 20,
+          power: 0.3,
+          timeConstant: 300
         }}
         whileHover={{ scale: 1.2 }}
-        whileTap={{ scale: 0.9, cursor: "grabbing" }}
+        whileDrag={{ scale: 1.1, cursor: "grabbing" }}
       >
         🚀
       </motion.div>
 
-      {/* Interactive Planet - Draggable anywhere with inertia and boundary bounce */}
+      {/* Interactive Planet - Draggable with momentum */}
       <motion.div
-        className="absolute text-9xl z-5 cursor-grab active:cursor-grabbing"
+        className="absolute text-9xl z-30 cursor-grab active:cursor-grabbing select-none"
         style={{ 
-          top: '8%',
+          top: '1%',
           right: '15%'
         }}
         animate={{
@@ -211,18 +212,19 @@ export default function ModulesPage() {
         dragConstraints={{
           left: -windowSize.width * 0.7,
           right: windowSize.width * 0.1,
-          top: -windowSize.height * 0.05,
-          bottom: windowSize.height * 0.6,
+          top: -windowSize.height * 0.1,
+          bottom: windowSize.height * 0.7,
         }}
-        dragElastic={0.2}
+        dragElastic={0.1}
+        dragMomentum={true}
         dragTransition={{ 
-          bounceStiffness: 400, 
-          bounceDamping: 15,
-          power: 0.2,
-          timeConstant: 200
+          bounceStiffness: 300, 
+          bounceDamping: 20,
+          power: 0.3,
+          timeConstant: 300
         }}
         whileHover={{ scale: 1.2 }}
-        whileTap={{ scale: 0.9, cursor: "grabbing" }}
+        whileDrag={{ scale: 1.1, cursor: "grabbing" }}
       >
         🪐
       </motion.div>
